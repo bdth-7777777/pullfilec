@@ -10,6 +10,8 @@
 start /wait pullfilec -o text\path.txt
 
 则程序运行完毕之后，文本文档当中就会有我选择的文件路径。
+
+您也可以不使用start /wait命令，但是那样命令行就不会等待程序执行完毕。
 ![image](https://github.com/bdth-7777777/pullfilec/assets/142554252/3a5c65f8-4e8a-451c-9622-2b749f6afc2f)
 
 
