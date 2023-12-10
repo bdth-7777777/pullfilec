@@ -9,7 +9,6 @@ char outputFile[1024] = "";
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    // 检查命令行参数，如果为空，则直接退出
     if (lpCmdLine == NULL || strlen(lpCmdLine) == 0)
     {
         return 0;
@@ -18,7 +17,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     const char *className = "MyWindowClass";
     const char *windowTitle = "文件路径选择";
 
-    // 获取命令行参数
     strncpy(outputFile, lpCmdLine, sizeof(outputFile) - 1);
 
     WNDCLASS wc = {0};
@@ -107,70 +105,72 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
-        case WM_COMMAND:
-            switch (LOWORD(wParam))
-            {
-                case 1: // 确认按钮
-                {
-                    FILE *fp = fopen(outputFile, "w");
-                    if (fp != NULL)
-                    {
-                        fputs(filePaths, fp);
-                        fclose(fp);
-                    }
-                    DestroyWindow(hwnd);
-                    break;
-                }
-                case 2: // 取消按钮
-                    DestroyWindow(hwnd);
-                    break;
-                case 3: // 重新选择按钮
-                    SetWindowText(hwndTextBox, "请拖入一个或多个文件");
-                    filePaths[0] = '\0';
-                    break;
-            }
-            break;
-        case WM_DROPFILES:
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
         {
-            HDROP hDrop = (HDROP)wParam;
-            UINT fileCount = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
-
-            for (UINT i = 0; i < fileCount; i++)
+        case 1: // 确认按钮
+        {
+            FILE *fp = fopen(outputFile, "w");
+            if (fp != NULL)
             {
-                UINT filePathLength = DragQueryFile(hDrop, i, NULL, 0);
-                char *filePath = (char *)malloc((filePathLength + 3) * sizeof(char));
-                DragQueryFile(hDrop, i, filePath, filePathLength + 1);
+                fputs(filePaths, fp);
+                fclose(fp);
+            }
+            DestroyWindow(hwnd);
+            break;
+        }
+        case 2: // 取消按钮
+            DestroyWindow(hwnd);
+            break;
+        case 3: // 重新选择按钮
+            SetWindowText(hwndTextBox, "请拖入一个或多个文件");
+            filePaths[0] = '\0';
+            break;
+        }
+        break;
+    case WM_DROPFILES:
+    {
+        HDROP hDrop = (HDROP)wParam;
+        UINT fileCount = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, 0);
 
-                // 检查是否为文件夹
-                DWORD attributes = GetFileAttributes(filePath);
-                if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY))
-                {
-                    free(filePath);
-                    continue;
-                }
+        for (UINT i = 0; i < fileCount; i++)
+        {
+            UINT filePathLength = DragQueryFile(hDrop, i, NULL, 0);
+            char *filePath = (char *)malloc((filePathLength + 3) * sizeof(char));
+            DragQueryFile(hDrop, i, filePath, filePathLength + 1);
 
+            DWORD attributes = GetFileAttributes(filePath);
+            if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY))
+            {
+                free(filePath);
+                continue;
+            }
+
+            if (strstr(filePaths, filePath) == NULL)
+            {
                 if (strlen(filePaths) > 0)
                 {
                     strcat(filePaths, "\r\n");
                 }
                 strcat(filePaths, filePath);
-
-                free(filePath);
             }
 
-            SetWindowText(hwndTextBox, filePaths);
-
-            DragFinish(hDrop);
-            break;
+            free(filePath);
         }
-        case WM_CLOSE:
-            DestroyWindow(hwnd);
-            break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            break;
-        default:
-            return DefWindowProc(hwnd, uMsg, wParam, lParam);
+
+        SetWindowText(hwndTextBox, filePaths);
+
+        DragFinish(hDrop);
+        break;
+    }
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
